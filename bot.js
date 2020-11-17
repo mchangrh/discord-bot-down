@@ -6,26 +6,34 @@ const Discord = require('discord.js')
 const statusMessage = {
   online: 'online 🟢',
   idle: 'idle 🌙',
-  offline: 'offline⚫',
+  offline: 'offline ⚫',
   dnd: 'dnd 🔴',
   undefined: 'undefined ⚪'
+}
+const statusCode = {
+  online: 200,
+  idle: 202,
+  offline: 503,
+  dnd: 410,
+  undefined: 500
 }
 const strings = {
   adminOnly: 'command only available to admins',
   invalidCommand: 'Invalid command - commands are user, status and prefix',
   noPrefix: 'please state new prefix'
 }
+const express = require('express')
+const app = express()
 
 // start
 const client = new Discord.Client() // create client
 client.on('ready', () => {
-  console.log('Ready')
+  console.log('Discord bot ready')
 })
 client.login(process.enve.TOKEN) // login
 const settings = require('./settings.json') // settings i/o
 
 // helper functions
-const fetch = (userID) => client.users.fetch(userID)
 const userStatus = (user) => `**${user.tag}:** ${statusMessage[user.presence.status]}` // manually fetch
 const logToChannel = (message) => {
   if (settings.logChannel) client.channels.cache.get(settings.logChannel).send(message)
@@ -58,7 +66,7 @@ client.on('message', message => {
     if (command === 'user') {
       if (args.length) {
         if (isAdmin) {
-          fetch(args[0])
+          client.users.fetch(args[0])
             .then(user => {
               settings.user = args[0]
               settings.userTag = `${user.tag}`
@@ -75,7 +83,7 @@ client.on('message', message => {
         message.channel.send(`current monitored user: ${settings.userTag}`)
       }
     } else if (command === 'status') { // status of user
-      fetch(settings.user)
+      client.users.fetch(settings.user)
         .then(user => {
           message.channel.send(userStatus(user))
         })
@@ -99,3 +107,24 @@ client.on('message', message => {
     }
   }
 })
+
+function startWebserver () {
+  // express webserver
+  app.get('/status', function (req, res) {
+    client.users.fetch(settings.user)
+      .then(user => {
+        const status = user.presence.status
+        res.status(statusCode[status]).send({ user: user.tag, status: statusMessage[status] })
+      })
+      .catch(error => {
+        res.status(500).send(`error: ${error}`)
+      })
+  })
+  app.get('*', function (req, res) {
+    res.status(404).send()
+  })
+  app.listen(3000, function () {
+    console.log('webserver started on port 3000')
+  })
+}
+startWebserver()
