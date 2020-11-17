@@ -6,7 +6,7 @@ const Discord = require('discord.js')
 const statusMessage = {
   online: 'online 🟢',
   idle: 'idle 🌙',
-  offline: 'offline ⚫',
+  offline: 'offline ⭕',
   dnd: 'dnd 🔴',
   undefined: 'undefined ⚪'
 }
@@ -33,11 +33,10 @@ client.on('ready', () => {
 client.login(process.enve.TOKEN) // login
 const settings = require('./settings.json') // settings i/o
 
-// helper functions
 const userStatus = (user) => `**${user.tag}:** ${statusMessage[user.presence.status]}` // manually fetch
-const logToChannel = (message) => {
+const logToChannel = (message) => { // send to log channel
   if (settings.logChannel) client.channels.cache.get(settings.logChannel).send(message)
-} // send to log channel
+}
 const updateSettings = (newSettings) => fs.writeFile('settings.json', JSON.stringify(newSettings), (err) => {
   if (err) console.log(err)
 })
@@ -46,8 +45,7 @@ function alert (message) { // send "alert"
   if (settings.alertMessage) logToChannel(settings.alertMessage)
 }
 
-// trigger on voice status change
-client.on('presenceUpdate', function (oldPresence, newPresence) {
+client.on('presenceUpdate', function (oldPresence, newPresence) { // trigger on presence
   if (newPresence.userID === settings.user) {
     const oldStatus = (oldPresence ? oldPresence.status : undefined)
     const newStatus = newPresence.status
@@ -109,7 +107,6 @@ client.on('message', message => {
 })
 
 function startWebserver () {
-  // express webserver
   app.get('/status', function (req, res) {
     client.users.fetch(settings.user)
       .then(user => {
