@@ -117,6 +117,9 @@ function startWebserver () {
         res.status(500).send(`error: ${error}`)
       })
   })
+  app.get('/', function (req, res) {
+    res.redirect(302, '/status')
+  })
   app.get('*', function (req, res) {
     res.status(404).send()
   })
