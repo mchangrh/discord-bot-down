@@ -1,6 +1,5 @@
 // imports
 require('dotenv').config()
-require('enve')
 const fs = require('fs')
 const Discord = require('discord.js')
 const statusMessage = {
@@ -17,11 +16,6 @@ const statusCode = {
   dnd: 410,
   undefined: 500
 }
-const strings = {
-  adminOnly: 'command only available to admins',
-  invalidCommand: 'Invalid command - commands are user, status and prefix',
-  noPrefix: 'please state new prefix'
-}
 const express = require('express')
 const app = express()
 
@@ -30,7 +24,7 @@ const client = new Discord.Client() // create client
 client.on('ready', () => {
   console.log('Discord bot ready')
 })
-client.login(process.enve.TOKEN) // login
+client.login(process.env.TOKEN) // login
 const settings = require('./settings.json') // settings i/o
 
 const userStatus = (user) => `**${user.tag}:** ${statusMessage[user.presence.status]}` // manually fetch
@@ -75,7 +69,7 @@ client.on('message', message => {
               message.channel.send(error.httpStatus === 404 ? 'user not found' : `error: ${error}`)
             })
         } else { // not admin
-          message.channel.send(strings.adminOnly)
+          message.channel.send('command only available to admins')
         }
       } else { // no arg
         message.channel.send(`current monitored user: ${settings.userTag}`)
@@ -95,13 +89,13 @@ client.on('message', message => {
           updateSettings(settings)
           message.channel.send(`new prefix is: ${settings.prefix}`)
         } else { // no prefix found
-          message.channel.send(settings.noPrefix)
+          message.channel.send('please state new prefix')
         }
       } else { // no admin
-        message.channel.send(strings.adminOnly)
+        message.channel.send('command only available to admins')
       }
     } else {
-      message.channel.send(strings.invalidCommand)
+      message.channel.send('Invalid command - commands are user, status and prefix')
     }
   }
 })

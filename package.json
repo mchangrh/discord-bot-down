@@ -6,7 +6,6 @@
   "dependencies": {
     "discord.js": "^12.5.1",
     "dotenv": "^8.2.0",
-    "enve": "^1.0.4",
     "express": "^4.17.1"
   },
   "devDependencies": {
