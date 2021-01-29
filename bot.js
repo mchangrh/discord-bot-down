@@ -16,7 +16,7 @@ const statusCode = {
   dnd: 410,
   undefined: 500
 }
-const fastify = require('fastify')
+const fastify = require('fastify')()
 
 // start
 const client = new Discord.Client() // create client
@@ -116,10 +116,6 @@ function startWebserver () {
   fastify.get('*', function (request, reply) {
     reply.code(404).send()
   })
-  fastify.listen(3000, function () {
-    console.log('webserver started on port 3000')
-  })
-
   fastify.listen(3000, function () {
     console.log('webserver started on port 3000')
   })
