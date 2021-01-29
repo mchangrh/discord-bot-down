@@ -100,7 +100,7 @@ client.on('message', message => {
 })
 
 function startWebserver () {
-  fastify.get('/', function (request, reply) {
+  fastify.get('/status', function (request, reply) {
     client.users.fetch(settings.user)
       .then(user => {
         const status = user.presence.status
@@ -116,8 +116,12 @@ function startWebserver () {
   fastify.get('*', function (request, reply) {
     reply.code(404).send()
   })
-  fastify.listen(3000, function () {
-    console.log('webserver started on port 3000')
+  fastify.listen(3000, function (err, address) {
+    if (err) {
+      console.error(err)
+      process.exit(1)
+    }
+    console.log(`server listening on ${address}`)
   })
 }
 startWebserver()
