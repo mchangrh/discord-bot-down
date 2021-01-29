@@ -16,8 +16,7 @@ const statusCode = {
   dnd: 410,
   undefined: 500
 }
-const express = require('express')
-const app = express()
+const fastify = require('fastify')
 
 // start
 const client = new Discord.Client() // create client
@@ -101,23 +100,27 @@ client.on('message', message => {
 })
 
 function startWebserver () {
-  app.get('/status', function (req, res) {
+  fastify.get('/', function (request, reply) {
     client.users.fetch(settings.user)
       .then(user => {
         const status = user.presence.status
-        res.status(statusCode[status]).send({ user: user.tag, status: statusMessage[status] })
+        reply.code(statusCode[status]).send({ user: user.tag, status: statusMessage[status] })
+      }).catch(error => {
+        reply.code(500).send(`error: ${error}`)
       })
-      .catch(error => {
-        res.status(500).send(`error: ${error}`)
-      })
   })
-  app.get('/', function (req, res) {
-    res.redirect(302, '/status')
+
+  fastify.get('/', function (request, reply) {
+    reply.redirect(302, '/status')
   })
-  app.get('*', function (req, res) {
-    res.status(404).send()
+  fastify.get('*', function (request, reply) {
+    reply.code(404).send()
   })
-  app.listen(3000, function () {
+  fastify.listen(3000, function () {
+    console.log('webserver started on port 3000')
+  })
+
+  fastify.listen(3000, function () {
     console.log('webserver started on port 3000')
   })
 }
