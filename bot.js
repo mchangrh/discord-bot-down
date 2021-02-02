@@ -2,6 +2,7 @@
 require('dotenv').config()
 const fs = require('fs')
 const Discord = require('discord.js')
+const fastify = require('fastify')()
 const statusMessage = {
   online: 'online 🟢',
   idle: 'idle 🌙',
@@ -16,7 +17,11 @@ const statusCode = {
   dnd: 410,
   undefined: 500
 }
-const fastify = require('fastify')()
+// temporarily stores last presence to check for sharding repeats
+let lastPresence
+let changeCount = 0
+const startUpDate = new Date()
+const settings = require('./settings.json') // settings i/o
 
 // start
 const client = new Discord.Client() // create client
@@ -24,7 +29,6 @@ client.on('ready', () => {
   console.log('Discord bot ready')
 })
 client.login(process.env.TOKEN) // login
-const settings = require('./settings.json') // settings i/o
 
 const userStatus = (user) => `**${user.tag}:** ${statusMessage[user.presence.status]}` // manually fetch
 const logToChannel = (message) => { // send to log channel
@@ -40,11 +44,20 @@ function alert (message) { // send "alert"
 
 client.on('presenceUpdate', function (oldPresence, newPresence) { // trigger on presence
   if (newPresence.userID === settings.user) {
+    if (newPresence.equals(lastPresence) && oldPresence) return // check for repeat or start from invalid
+    // craft response
     const oldStatus = (oldPresence ? oldPresence.status : undefined)
     const newStatus = newPresence.status
-    const message = `[${new Date().toUTCString()}] ${settings.userTag} changed from ${statusMessage[oldStatus]} to ${statusMessage[newStatus]}`
-    if ((oldStatus === 'offline' && newStatus === 'online') || (oldStatus === 'online' && newStatus === 'offline')) alert(message)
+    const message = `[${new Date().toUTCString()}] ${newPresence.user.tag} changed from ${statusMessage[oldStatus]} to ${statusMessage[newStatus]}`
+    if ((oldStatus === 'offline' && newStatus === 'online') || (oldStatus === 'online' && newStatus === 'offline')) {
+      alert(message)
+    } else {
+      logToChannel(message)
+    }
     console.log(message)
+    // log change
+    changeCount++
+    lastPresence = newPresence
   }
 })
 
@@ -53,48 +66,35 @@ client.on('message', message => {
   if (!message.author.bot && message.content.startsWith(prefix)) { // check if sent by bot & check for prefix
     const args = message.content.slice(prefix.length).split(' ') // split
     const command = args.shift().toLowerCase()
-    const isAdmin = settings.admins.includes(message.author.id) && settings.adminOnly
     if (command === 'user') {
       if (args.length) {
-        if (isAdmin) {
-          client.users.fetch(args[0])
-            .then(user => {
-              settings.user = args[0]
-              settings.userTag = `${user.tag}`
-              message.channel.send(`monitored user set to ${settings.userTag}`)
-              updateSettings(settings)
-            })
-            .catch(error => {
-              message.channel.send(error.httpStatus === 404 ? 'user not found' : `error: ${error}`)
-            })
-        } else { // not admin
-          message.channel.send('command only available to admins')
-        }
-      } else { // no arg
-        message.channel.send(`current monitored user: ${settings.userTag}`)
-      }
+        client.users.fetch(args[0])
+          .then(user => {
+            settings.user = args[0]
+            settings.userTag = `${user.tag}`
+            message.channel.send(`monitored user set to ${settings.userTag}`)
+            updateSettings(settings)
+          })
+          .catch(error => {
+            message.channel.send(error.httpStatus === 404 ? 'user not found' : `error: ${error}`)
+          })
+      } else { message.channel.send(`current monitored user: ${settings.userTag}`) }
     } else if (command === 'status') { // status of user
       client.users.fetch(settings.user)
-        .then(user => {
-          message.channel.send(userStatus(user))
-        })
-        .catch(error => {
-          message.channel.send(`error: ${error}`)
-        })
+        .then(user => { message.channel.send(userStatus(user)) })
+        .catch(error => { message.channel.send(`error: ${error}`) })
     } else if (command === 'prefix') {
-      if (isAdmin) {
-        if (args.length) {
-          settings.prefix = args[0]
-          updateSettings(settings)
-          message.channel.send(`new prefix is: ${settings.prefix}`)
-        } else { // no prefix found
-          message.channel.send('please state new prefix')
-        }
-      } else { // no admin
-        message.channel.send('command only available to admins')
+      if (args.length) {
+        settings.prefix = args[0]
+        updateSettings(settings)
+        message.channel.send(`new prefix is: ${settings.prefix}`)
+      } else { // no prefix found
+        message.channel.send(`current prefix is ${settings.prefix}`)
       }
+    } else if (command === 'stats') { // status of user
+      message.channel.send(`There have been ${changeCount} presence changes since \`${startUpDate.toString()}\``)
     } else {
-      message.channel.send('Invalid command - commands are user, status and prefix')
+      message.channel.send('Invalid command - commands are user, status, prefix, and stats')
     }
   }
 })
@@ -105,9 +105,7 @@ function startWebserver () {
       .then(user => {
         const status = user.presence.status
         reply.code(statusCode[status]).send({ user: user.tag, status: statusMessage[status] })
-      }).catch(error => {
-        reply.code(500).send(`error: ${error}`)
-      })
+      }).catch(error => { reply.code(500).send(`error: ${error}`) })
   })
 
   fastify.get('/', function (request, reply) {
