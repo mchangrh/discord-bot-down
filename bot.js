@@ -25,9 +25,7 @@ const settings = require('./settings.json') // settings i/o
 
 // start
 const client = new Discord.Client() // create client
-client.on('ready', () => {
-  console.log('Discord bot ready')
-})
+client.on('ready', () => { console.log('Discord bot ready') })
 client.login(process.env.TOKEN) // login
 
 const userStatus = (user) => `**${user.tag}:** ${statusMessage[user.presence.status]}` // manually fetch
@@ -48,12 +46,8 @@ client.on('presenceUpdate', function (oldPresence, newPresence) { // trigger on 
     // craft response
     const oldStatus = (oldPresence ? oldPresence.status : undefined)
     const newStatus = newPresence.status
-    const message = `[${new Date().toUTCString()}] ${newPresence.user.tag} changed from ${statusMessage[oldStatus]} to ${statusMessage[newStatus]}`
-    if ((oldStatus === 'offline' && newStatus === 'online') || (oldStatus === 'online' && newStatus === 'offline')) {
-      alert(message)
-    } else {
-      logToChannel(message)
-    }
+    const message = `[${new Date().toUTCString()}] ${newPresence.user.userTag} changed from ${statusMessage[oldStatus]} to ${statusMessage[newStatus]}`
+    if ((oldStatus === 'offline' && newStatus === 'online') || (oldStatus === 'online' && newStatus === 'offline')) alert(message)
     console.log(message)
     // log change
     changeCount++
@@ -71,14 +65,17 @@ client.on('message', message => {
         client.users.fetch(args[0])
           .then(user => {
             settings.user = args[0]
-            settings.userTag = `${user.tag}`
-            message.channel.send(`monitored user set to ${settings.userTag}`)
+            message.channel.send(`monitored user set to ${user.tag}`)
             updateSettings(settings)
           })
           .catch(error => {
             message.channel.send(error.httpStatus === 404 ? 'user not found' : `error: ${error}`)
           })
-      } else { message.channel.send(`current monitored user: ${settings.userTag}`) }
+      } else {
+        client.users.fetch(args[0])
+          .then(user => { message.channel.send(`current monitored user: ${user.userTag}`) })
+          .catch(error => { message.channel.send(error.httpStatus === 404 ? 'user not found' : `error: ${error}`) })
+      }
     } else if (command === 'status') { // status of user
       client.users.fetch(settings.user)
         .then(user => { message.channel.send(userStatus(user)) })
