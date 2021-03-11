@@ -18,7 +18,6 @@ const statusCode = {
   undefined: 500
 }
 // temporarily stores last presence to check for sharding repeats
-let lastPresence
 let changeCount = 0
 const startUpDate = new Date()
 const settings = require('./settings.json') // settings i/o
@@ -42,7 +41,6 @@ function alert (message) { // send "alert"
 
 client.on('presenceUpdate', function (oldPresence, newPresence) { // trigger on presence
   if (newPresence.userID === settings.user) {
-    if (newPresence.equals(lastPresence) && oldPresence) return // check for repeat or start from invalid
     // craft response
     const oldStatus = (oldPresence ? oldPresence.status : undefined)
     const newStatus = newPresence.status
@@ -51,7 +49,6 @@ client.on('presenceUpdate', function (oldPresence, newPresence) { // trigger on 
     console.log(message)
     // log change
     changeCount++
-    lastPresence = newPresence
   }
 })
 
