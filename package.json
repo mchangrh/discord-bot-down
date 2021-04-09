@@ -1,15 +1,15 @@
 {
   "name": "discord-bot-down",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "monitors status of discord bot",
   "main": "bot.js",
   "dependencies": {
-    "discord.js": "^12.5.1",
+    "discord.js": "^12.5.3",
     "dotenv": "^8.2.0",
-    "fastify": "^3.14.0"
+    "fastify": "^3.14.2"
   },
   "devDependencies": {
-    "eslint": "^7.21.0",
+    "eslint": "^7.23.0",
     "eslint-config-standard": "^16.0.2",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-node": "^11.1.0",

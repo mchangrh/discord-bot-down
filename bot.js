@@ -1,4 +1,3 @@
-// imports
 require('dotenv').config()
 const fs = require('fs')
 const Discord = require('discord.js')
@@ -44,7 +43,7 @@ client.on('presenceUpdate', function (oldPresence, newPresence) { // trigger on 
     // craft response
     const oldStatus = (oldPresence ? oldPresence.status : undefined)
     const newStatus = newPresence.status
-    const message = `[${new Date().toUTCString()}] ${newPresence.user.userTag} changed from ${statusMessage[oldStatus]} to ${statusMessage[newStatus]}`
+    const message = `[${new Date().toUTCString()}] ${newPresence.user.tag} changed from ${statusMessage[oldStatus]} to ${statusMessage[newStatus]}`
     if ((oldStatus === 'offline' && newStatus === 'online') || (oldStatus === 'online' && newStatus === 'offline')) alert(message)
     console.log(message)
     // log change
@@ -70,7 +69,7 @@ client.on('message', message => {
           })
       } else {
         client.users.fetch(args[0])
-          .then(user => { message.channel.send(`current monitored user: ${user.userTag}`) })
+          .then(user => { message.channel.send(`current monitored user: ${user.tag}`) })
           .catch(error => { message.channel.send(error.httpStatus === 404 ? 'user not found' : `error: ${error}`) })
       }
     } else if (command === 'status') { // status of user
