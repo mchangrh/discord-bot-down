@@ -93,7 +93,7 @@ client.on('message', message => {
 })
 
 function startWebserver () {
-  fastify.get('/status', function (request, reply) {
+  fastify.all('/status', function (request, reply) {
     client.users.fetch(settings.user)
       .then(user => {
         const status = user.presence.status
@@ -101,10 +101,10 @@ function startWebserver () {
       }).catch(error => { reply.code(500).send(`error: ${error}`) })
   })
 
-  fastify.get('/', function (request, reply) {
+  fastify.all('/', function (request, reply) {
     reply.redirect(302, '/status')
   })
-  fastify.get('*', function (request, reply) {
+  fastify.all('*', function (request, reply) {
     reply.code(404).send()
   })
   fastify.listen(3000, function (err, address) {
