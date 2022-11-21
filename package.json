@@ -6,7 +6,7 @@
   "dependencies": {
     "discord.js": "^12.5.3",
     "dotenv": "^16.0.1",
-    "fastify": "^3.29.0"
+    "fastify": "^3.29.4"
   },
   "devDependencies": {
     "eslint": "^8.15.0",
