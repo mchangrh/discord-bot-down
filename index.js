@@ -93,26 +93,15 @@ client.on('message', message => {
 })
 
 function startWebserver () {
-  fastify.all('/status', function (request, reply) {
+  fastify.all('/status', (request, reply) =>
     client.users.fetch(settings.user)
       .then(user => {
         const status = user.presence.status
         reply.code(statusCode[status]).send({ user: user.tag, status: statusMessage[status] })
       }).catch(error => { reply.code(500).send(`error: ${error}`) })
-  })
-
-  fastify.all('/', function (request, reply) {
-    reply.redirect(302, '/status')
-  })
-  fastify.all('*', function (request, reply) {
-    reply.code(404).send()
-  })
-  fastify.listen(3000, function (err, address) {
-    if (err) {
-      console.error(err)
-      process.exit(1)
-    }
-    console.log(`server listening on ${address}`)
-  })
+  )
+  fastify.all('/', (request, reply) => reply.redirect(302, '/status'))
+  fastify.all('*', (request, reply) => reply.code(404).send())
+  fastify.listen({ port: 3000 })
 }
 startWebserver()
